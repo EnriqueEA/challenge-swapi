@@ -1,68 +1,208 @@
-<!--
-title: 'AWS NodeJS Example'
-description: 'This template demonstrates how to deploy a simple NodeJS function running on AWS Lambda using the Serverless Framework.'
-layout: Doc
-framework: v4
-platform: AWS
-language: nodeJS
-priority: 1
-authorLink: 'https://github.com/serverless'
-authorName: 'Serverless, Inc.'
-authorAvatar: 'https://avatars1.githubusercontent.com/u/13742415?s=200&v=4'
--->
+# SWAPI Challenge - API de Fusión de Planetas y Clima
 
-# Serverless Framework AWS NodeJS Example
+Una API serverless que fusiona datos de planetas de Star Wars (SWAPI) con información meteorológica de la Tierra, creando descripciones narrativas que conectan ambos mundos.
 
-This template demonstrates how to deploy a simple NodeJS function running on AWS Lambda using the Serverless Framework. The deployed function does not include any event definitions or any kind of persistence (database). For more advanced configurations check out the [examples repo](https://github.com/serverless/examples/) which include use cases like API endpoints, workers triggered by SQS, persistence with DynamoDB, and scheduled tasks. For details about configuration of specific events, please refer to our [documentation](https://www.serverless.com/framework/docs/providers/aws/events/).
+## 🌟 Características
 
-## Usage
+- **Fusión de Datos**: Combina información de planetas de Star Wars con datos meteorológicos reales
+- **Caché Inteligente**: Sistema de caché con TTL de 30 minutos para optimizar rendimiento
+- **Autenticación JWT**: Endpoints protegidos con autenticación basada en tokens
+- **Almacenamiento Personalizado**: Permite guardar datos personalizados con autenticación
+- **Historial Completo**: Acceso al historial de todas las fusiones realizadas
+- **Arquitectura Limpia**: Implementa principios de Clean Architecture con TypeScript
 
-### Deployment
+## 🏗️ Arquitectura
 
-In order to deploy the example, you need to run the following command:
+El proyecto sigue una arquitectura hexagonal (Clean Architecture) con las siguientes capas:
 
 ```
-serverless deploy
+src/
+├── domain/           # Entidades de negocio
+├── application/      # Casos de uso y puertos
+├── infrastructure/   # Adaptadores e implementaciones
+└── presentation/     # Controllers HTTP y utilidades
 ```
 
-After running deploy, you should see output similar to:
+### Tecnologías Utilizadas
 
-```
-Deploying "aws-node" to stage "dev" (us-east-1)
+- **Runtime**: Node.js 20.x
+- **Framework**: Serverless Framework v4
+- **Base de Datos**: AWS DynamoDB
+- **Cache**: DynamoDB con TTL
+- **Autenticación**: JWT
+- **APIs Externas**:
+  - SWAPI (Star Wars API)
+  - Open-Meteo (datos meteorológicos)
+  - OpenStreetMap Nominatim (geolocalización)
 
-✔ Service deployed to stack aws-node-dev (90s)
+## 🚀 Endpoints Disponibles
 
-functions:
-  hello: aws-node-dev-hello (1.5 kB)
-```
+### `GET /fusionados`
 
-### Invocation
+Obtiene una nueva fusión de planeta y clima.
 
-After successful deployment, you can invoke the deployed function by using the following command:
-
-```
-serverless invoke --function hello
-```
-
-Which should result in response similar to the following:
+**Respuesta:**
 
 ```json
 {
-  "statusCode": 200,
-  "body": "{\"message\":\"Go Serverless v4.0! Your function executed successfully!\"}"
+  "planet": {
+    "name": "Tatooine",
+    "climate": "arid",
+    "terrain": "desert",
+    "latitude": 42.123,
+    "longitude": -71.456
+  },
+  "weather": {
+    "temperature": "23°C",
+    "windSpeed": "15 km/h",
+    "country": "Spain",
+    "displayName": "Madrid, Spain"
+  },
+  "description": "El planeta Tatooine en las coordenadas 42.123°N, -71.456°E, con un clima arid, terreno desert, tiene como equivalencia en el planeta Tierra los datos meteorológicos de Madrid, Spain, donde actualmente la temperatura es de 23°C y la velocidad del viento es de 15 km/h.",
+  "fusedAt": "2025-06-23T10:30:00.000Z"
 }
 ```
 
-### Local development
+### `POST /almacenar` 🔒
 
-The easiest way to develop and test your function is to use the Serverless Framework's `dev` command:
+Almacena datos personalizados (requiere autenticación JWT).
+
+**Headers:**
 
 ```
-serverless dev
+Authorization: Bearer <jwt_token>
 ```
 
-This will start a local emulator of AWS Lambda and tunnel your requests to and from AWS Lambda, allowing you to interact with your function as if it were running in the cloud.
+**Body:**
 
-Now you can invoke the function as before, but this time the function will be executed locally. Now you can develop your function locally, invoke it, and see the results immediately without having to re-deploy.
+```json
+{
+  "customField": "valor personalizado",
+  "anotherField": 123
+}
+```
 
-When you are done developing, don't forget to run `serverless deploy` to deploy the function to the cloud.
+### `GET /historial` 🔒
+
+Obtiene el historial de todas las fusiones (requiere autenticación JWT).
+
+**Headers:**
+
+```
+Authorization: Bearer <jwt_token>
+```
+
+## 🛠️ Instalación y Desarrollo
+
+### Prerrequisitos
+
+- Node.js 20.x o superior
+- AWS CLI configurado
+- Serverless Framework CLI
+
+### Instalación
+
+```bash
+# Clonar el repositorio
+git clone <repository-url>
+cd rimac-swapi
+
+# Instalar dependencias
+npm install
+
+# Configurar variables de entorno
+cp .env.template .env
+# Editar .env con tus valores
+```
+
+### Variables de Entorno
+
+```bash
+JWT_SECRET=tu_secreto_jwt_aqui
+```
+
+### Desarrollo Local
+
+```bash
+# Iniciar el servidor local
+npm run dev
+# o
+serverless offline
+
+# Linting y formateo
+npm run lint
+npm run lint:fix
+npm run prettier
+```
+
+### Despliegue
+
+```bash
+# Desplegar a AWS
+serverless deploy
+
+# Desplegar a un stage específico
+serverless deploy --stage production
+```
+
+## 🔧 Configuración
+
+### DynamoDB
+
+El proyecto utiliza dos tablas de DynamoDB:
+
+1. **FusedPlanetWeatherV2**: Almacena las fusiones y datos personalizados
+2. **FusedPlanetWeatherCache**: Cache con TTL para optimizar consultas
+
+### JWT
+
+Para generar un token JWT de prueba, puedes usar:
+
+```javascript
+const jwt = require("jsonwebtoken");
+const token = jwt.sign({ userId: "test" }, "tu_secreto_jwt_aqui");
+console.log(token);
+```
+
+## 📊 Flujo de Datos
+
+1. **Fusión de Planetas**:
+   - Obtiene un planeta aleatorio de SWAPI
+   - Verifica el caché
+   - Obtiene datos meteorológicos de las coordenadas del planeta
+   - Genera una descripción narrativa
+   - Almacena en base de datos y caché
+
+2. **Cache Strategy**:
+   - TTL de 30 minutos por planeta
+   - Mejora significativamente el rendimiento
+   - Reduce llamadas a APIs externas
+
+3. **Autenticación**:
+   - JWT Authorizer custom
+   - Protege endpoints sensibles
+   - Validación automática de tokens
+
+## 🧪 Testing
+
+```bash
+# Ejecutar tests
+npm test
+
+# Validar código
+npm run lint
+```
+
+## 📚 Estructura del Proyecto
+
+- **Domain**: Entidades como `FusedPlanetWeather` y `CustomData`
+- **Application**: Casos de uso como `FusionPlanetWeather`, `GetFusionHistory`
+- **Infrastructure**: Implementaciones de repositorios, cache y clientes API
+- **Presentation**: Handlers HTTP y utilidades
+
+## 🔒 Seguridad
+
+- Autenticación JWT en endpoints sensibles
+- Validación de inputs
+- Principio de menor privilegio en IAM roles
+- Variables de entorno para secretos
