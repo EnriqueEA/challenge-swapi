@@ -14,11 +14,9 @@ export class FusionPlanetWeather {
 
   async execute(): Promise<FusedPlanetWeather> {
     const planet = await this.swapiService.getRandomPlanet();
-    console.log("planet", planet);
     const cached = await this.cacheService.get<FusedPlanetWeather>(planet.name);
     if (cached) return cached;
 
-    console.log("Fusing planet weather: 1");
     const weather = await this.weatherService.getWeatherByCoordinates(
       planet.latitude,
       planet.longitude,
@@ -29,7 +27,6 @@ export class FusionPlanetWeather {
       new Date().toISOString(),
     );
     await this.fusedRepository.save(fused);
-    console.log("Fusing planet weather: 23");
     await this.cacheService.set(planet.name, fused);
     return fused;
   }

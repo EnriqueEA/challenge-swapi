@@ -16,9 +16,10 @@ export class FusedPlanetWeatherRepository implements FusedRepository {
     this.client = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
       marshallOptions: {
         removeUndefinedValues: true,
+        convertClassInstanceToMap: true,
       },
     });
-    this.tableName = process.env.FUSED_TABLE || "FusedPlanetWeatherV2-dev";
+    this.tableName = process.env.FUSED_TABLE || "FusedPlanetWeather-dev";
   }
 
   async save(item: FusedPlanetWeather): Promise<void> {

@@ -15,6 +15,7 @@ export class DynamoCache implements CacheService {
     this.client = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
       marshallOptions: {
         removeUndefinedValues: true,
+        convertClassInstanceToMap: true,
       },
     });
     this.tableName = process.env.CACHE_TABLE || "FusedPlanetWeatherCache-dev";
