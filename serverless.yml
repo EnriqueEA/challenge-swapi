@@ -5,6 +5,21 @@ plugins:
   - serverless-auto-swagger
   - serverless-offline
 
+package:
+  individually: true
+
+build:
+  esbuild:
+    minify: true
+
+custom:
+  autoSwagger:
+    basePath: /dev
+    apiVersion: v1
+    title: Fused Planet Weather API
+    description: API for managing weather data and fusions.
+    generateSwaggerOnDeploy: false
+
 provider:
   name: aws
   runtime: nodejs20.x
@@ -13,8 +28,9 @@ provider:
 
   environment:
     JWT_SECRET: ${env:JWT_SECRET, 'MY_JWT_SECRET'}
-    FUSED_TABLE: FusedPlanetWeatherV2-${self:provider.stage}
+    FUSED_TABLE: FusedPlanetWeather-${self:provider.stage}
     CACHE_TABLE: FusedPlanetWeatherCache-${self:provider.stage}
+    WEATHER_API_KEY: ${env:WEATHER_API_KEY}
 
   iam:
     role:
@@ -31,6 +47,7 @@ provider:
 functions:
   getFuses:
     handler: src/presentation/http/getFuses.handler
+    timeout: 10
     events:
       - http:
           path: fusionados
@@ -38,6 +55,7 @@ functions:
 
   storeCustomData:
     handler: src/presentation/http/storeCustomData.handler
+    timeout: 10
     events:
       - http:
           path: almacenar
@@ -49,6 +67,7 @@ functions:
 
   getHistorial:
     handler: src/presentation/http/getHistory.handler
+    timeout: 10
     events:
       - http:
           path: historial
@@ -66,7 +85,7 @@ resources:
     FusedPlanetWeatherTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: FusedPlanetWeatherV2-${self:provider.stage}
+        TableName: FusedPlanetWeather-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: PK
             AttributeType: S

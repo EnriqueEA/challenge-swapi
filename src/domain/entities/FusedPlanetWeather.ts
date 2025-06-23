@@ -15,8 +15,11 @@ export interface PlanetInfo {
 export interface WeatherData {
   temperature: string;
   windSpeed: string;
-  country?: string;
-  displayName?: string;
+  country: string;
+  region: string;
+  city: string;
+  condition: string;
+  humidity: string;
 }
 
 export class FusedPlanetWeather {
@@ -31,10 +34,6 @@ export class FusedPlanetWeather {
   }
 
   private generateDescription(): string {
-    const earthLocation = this.weather.country
-      ? `${this.weather.displayName || "una ubicación"}, ${this.weather.country}`
-      : this.weather.displayName || "una ubicación en la Tierra";
-
-    return `El planeta ${this.planet.name} en las coordenadas ${this.planet.latitude}°N, ${this.planet.longitude}°E, con un clima ${this.planet.climate}, terreno ${this.planet.terrain}, tiene como equivalencia en el planeta Tierra los datos meteorológicos de ${earthLocation}, donde actualmente la temperatura es de ${this.weather.temperature} y la velocidad del viento es de ${this.weather.windSpeed}.`;
+    return `El planeta ${this.planet.name} (climate de ${this.planet.climate} y terreno de ${this.planet.terrain}) con un período de rotación de ${this.planet.rotationPeriod} y diámetro de ${this.planet.diameter}, presenta condiciones atmosféricas similares a ${this.weather.city}, ${this.weather.region}, ${this.weather.country}, donde actualmente se registra ${this.weather.condition} con una temperatura de ${this.weather.temperature}, humedad del ${this.weather.humidity} y vientos de ${this.weather.windSpeed}.`;
   }
 }
