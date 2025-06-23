@@ -1,0 +1,95 @@
+service: swapi-challenge
+frameworkVersion: "4"
+
+plugins:
+  - serverless-auto-swagger
+  - serverless-offline
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  stage: dev
+  architecture: arm64
+
+  environment:
+    JWT_SECRET: ${env:JWT_SECRET, 'MY_JWT_SECRET'}
+    FUSED_TABLE: FusedPlanetWeatherV2-${self:provider.stage}
+    CACHE_TABLE: FusedPlanetWeatherCache-${self:provider.stage}
+
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Query
+          Resource:
+            - !GetAtt FusedPlanetWeatherTable.Arn
+            - !GetAtt FusedPlanetWeatherCache.Arn
+
+functions:
+  getFuses:
+    handler: src/presentation/http/getFuses.handler
+    events:
+      - http:
+          path: fusionados
+          method: get
+
+  storeCustomData:
+    handler: src/presentation/http/storeCustomData.handler
+    events:
+      - http:
+          path: almacenar
+          method: post
+          authorizer:
+            name: jwtAuthorizer
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+
+  getHistorial:
+    handler: src/presentation/http/getHistory.handler
+    events:
+      - http:
+          path: historial
+          method: get
+          authorizer:
+            name: jwtAuthorizer
+            type: TOKEN
+            identitySource: method.request.header.Authorization
+
+  jwtAuthorizer:
+    handler: src/presentation/http/jwtAuthorizer.jwtAuthorizer
+
+resources:
+  Resources:
+    FusedPlanetWeatherTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: FusedPlanetWeatherV2-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+
+    FusedPlanetWeatherCache:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: FusedPlanetWeatherCache-${self:provider.stage}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TimeToLiveSpecification:
+          AttributeName: expiresAt
+          Enabled: true
